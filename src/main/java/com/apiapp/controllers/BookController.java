@@ -1,8 +1,11 @@
 package com.apiapp.controllers;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,13 +24,12 @@ public class BookController {
 	private BookService bookServices;
 	
 	@GetMapping("/books")
-	public List<Book> getBooks() {
-		return this.bookServices.getAllBooks();
-		/*Book book=new Book();
-		book.setId(0);
-		book.setTitle("Java");
-		book.setAuthor("Rehan");
-		return book;*/
+	public ResponseEntity<List<Book>> getBooks() {
+		List<Book> list = this.bookServices.getAllBooks();
+		if(list.size()<=0) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+		}
+		return ResponseEntity.of(Optional.of(list));
 		
 	}
 	
@@ -37,18 +39,25 @@ public class BookController {
 	}
 	
 	@PostMapping("/books")
-	public Book addBook(@RequestBody Book book) {
-		Book b = this.bookServices.addBook(book);
-		return b;
+	public ResponseEntity<Book> addBook(@RequestBody Book book) {
+		Book b = null;
+		try {
+			b = this.bookServices.addBook(book);
+			return ResponseEntity.of(Optional.of(b));
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+		}
 	}
 	
 	@DeleteMapping("/books/{bookId}")
-	public void deleteBook(@PathVariable("bookId") int bookId) {
+	public ResponseEntity<Void> deleteBook(@PathVariable("bookId") int bookId) {
 		this.bookServices.deleteBook(bookId);
+		return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
 	}
 	
 	@PutMapping("/books/{bookId}")
-	public List<Book> updateBook(@RequestBody Book book, @PathVariable("bookId") int bookId) {
-		return this.bookServices.updateBook(book, bookId);
+	public ResponseEntity<Book> updateBook(@RequestBody Book book, @PathVariable("bookId") int bookId) {
+		this.bookServices.updateBook(book, bookId);
+		return ResponseEntity.ok().body(book);
 	}
 }
